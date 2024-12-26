@@ -5,7 +5,6 @@ const url = require('url');
 const usersDataPath = './users.json';
 const blogDataPath = './blog.json';
 
-
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
@@ -114,7 +113,79 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ message: 'User deleted' }));
   }
 
+  else if (parsedUrl.pathname === '/blog' && method === 'POST') {
+    let body = '';
 
+    req.on('data', chunk => {
+      body += chunk;
+    });
+
+    req.on('end', () => {
+      const { title, slug, content, tags } = JSON.parse(body);
+
+      const blogs = JSON.parse(fs.readFileSync(blogDataPath));
+      const newBlog = { id: blogs.length + 1, title, slug, content, tags, comments: [] };
+      blogs.push(newBlog);
+
+      fs.writeFileSync(blogDataPath, JSON.stringify(blogs, null, 2));
+
+      res.statusCode = 201;
+      res.end(JSON.stringify(newBlog));
+    });
+  }
+
+  else if (parsedUrl.pathname === '/blog' && method === 'GET') {
+    const blogs = JSON.parse(fs.readFileSync(blogDataPath));
+    res.end(JSON.stringify(blogs));
+  }
+
+  else if (parsedUrl.pathname.startsWith('/blog/') && method === 'PUT') {
+    const blogId = parsedUrl.pathname.split('/')[2];
+    let body = '';
+
+    req.on('data', chunk => {
+      body += chunk;
+    });
+
+    req.on('end', () => {
+      const { title, slug, content, tags } = JSON.parse(body);
+      const blogs = JSON.parse(fs.readFileSync(blogDataPath));
+
+      const blog = blogs.find(b => b.id === parseInt(blogId));
+      if (!blog) {
+        return res.end(JSON.stringify({ message: 'Blog not found' }));
+      }
+
+      blog.title = title || blog.title;
+      blog.slug = slug || blog.slug;
+      blog.content = content || blog.content;
+      blog.tags = tags || blog.tags;
+
+      fs.writeFileSync(blogDataPath, JSON.stringify(blogs, null, 2));
+
+      res.end(JSON.stringify(blog));
+    });
+  }
+
+  else if (parsedUrl.pathname.startsWith('/blog/') && method === 'DELETE') {
+    const blogId = parsedUrl.pathname.split('/')[2];
+    const blogs = JSON.parse(fs.readFileSync(blogDataPath));
+
+    const blogIndex = blogs.findIndex(b => b.id === parseInt(blogId));
+    if (blogIndex === -1) {
+      return res.end(JSON.stringify({ message: 'Blog not found' }));
+    }
+
+    blogs.splice(blogIndex, 1);
+    fs.writeFileSync(blogDataPath, JSON.stringify(blogs, null, 2));
+
+    res.end(JSON.stringify({ message: 'Blog deleted' }));
+  } 
+
+  else {
+    res.statusCode = 404;
+    res.end(JSON.stringify({ message: 'Route not found' }));
+  }
 });
 
 server.listen(3000, () => {

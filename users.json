@@ -1,11 +1,11 @@
 [
   {
-    "id": 2,
-    "username": "Ozodbek",
-    "password": "password123",
-    "fullName": "Ozodbek Khashimov",
+    "id": 1,
+    "username": "john_doe",
+    "password": "12345",
+    "fullName": "John Doe",
     "age": 25,
-    "email": "ozodbek@example.com",
+    "email": "john@example.com",
     "gender": "male"
   }
 ]
